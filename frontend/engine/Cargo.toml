@@ -1,0 +1,19 @@
+[package]
+name = "news-engine"
+version = "0.1.0"
+edition = "2021"
+authors = ["signalflowsean"]
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+wasm-bindgen = "0.2"
+
+# Future dependencies for WebGPU rendering:
+# wgpu = "0.19"
+# web-sys = { version = "0.3", features = ["Window", "Document", "HtmlCanvasElement"] }
+
+[profile.release]
+opt-level = "s"
+lto = true

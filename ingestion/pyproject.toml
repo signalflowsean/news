@@ -1,0 +1,26 @@
+[project]
+name = "news-ingestion"
+version = "0.1.0"
+description = "GDELT event ingestion and classification for Neo4j"
+requires-python = ">=3.11"
+dependencies = [
+    "google-cloud-bigquery>=3.17.0",
+    "neo4j>=5.17.0",
+    "pydantic>=2.6.0",
+    "pydantic-settings>=2.1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "black>=24.1.0",
+    "ruff>=0.2.0",
+]
+
+[build-system]
+requires = ["setuptools>=69.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
