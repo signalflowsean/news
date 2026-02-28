@@ -6,11 +6,13 @@ Canvas-based visualization app. Rendering handled by Rust/Wasm engine.
 
 - Node.js 18+
 - Rust + wasm-pack (for engine builds)
+  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 
 ## Setup
 
 ```bash
 npm install
+cargo install wasm-pack
 ```
 
 ## Development

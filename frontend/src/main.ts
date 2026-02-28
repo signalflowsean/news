@@ -1,7 +1,7 @@
 import './styles/main.css';
 import type { InitialData } from './types';
 
-const canvas = document.getElementById('app') as HTMLCanvasElement;
+const canvas = document.getElementById('engine') as HTMLCanvasElement;
 const ctx = canvas.getContext('2d');
 
 function resize() {
@@ -12,11 +12,12 @@ function resize() {
 window.addEventListener('resize', resize);
 resize();
 
-const data: InitialData = window.__INITIAL_DATA__ ?? { stories: [] };
+const data: InitialData = (window as any).__INITIAL_DATA__ ?? { stories: [] };
 
 async function initWasm() {
   try {
     const wasm = await import('./wasm/news_engine');
+    await wasm.default();
     wasm.init();
     wasm.render();
     console.log('Wasm engine initialized');

@@ -8,9 +8,3 @@ export interface Story {
 export interface InitialData {
   stories: Story[];
 }
-
-declare global {
-  interface Window {
-    __INITIAL_DATA__?: InitialData;
-  }
-}
