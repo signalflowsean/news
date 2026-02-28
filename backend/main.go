@@ -1,5 +1,6 @@
 package main
 
+// TODO: Use a framework (fiber, gin, echo, etc.)
 import (
 	"encoding/json"
 	"log"
