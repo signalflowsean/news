@@ -38,18 +38,3 @@ p {
     scroll-padding-top: 3rem;
   }
 }
-
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-html, body {
-  overflow: clip;
-  background: #1a1a2e;
-}
-
-#app {
-  display: block;
-}

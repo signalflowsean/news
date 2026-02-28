@@ -1,38 +1,20 @@
 use wasm_bindgen::prelude::*;
-
-#[wasm_bindgen]
-extern "C" {
-    #[wasm_bindgen(js_namespace = console)]
-    fn log(s: &str);
-}
-
-macro_rules! console_log {
-    ($($t:tt)*) => (log(&format_args!($($t)*).to_string()))
-}
-
-/// Graph layout and rendering engine.
-/// Future: Will use wgpu/WebGPU for GPU-accelerated rendering.
-pub struct GraphRenderer {
-    // Future fields:
-    // device: wgpu::Device,
-    // queue: wgpu::Queue,
-    // surface: wgpu::Surface,
-}
+use web_sys::console;
 
 #[wasm_bindgen]
 pub fn init() {
-    console_log!("news-engine: initialized");
+    console::log_1(&format!("news-engine: initialized").into());
     // Future: Initialize wgpu device, surface, pipelines
 }
 
 #[wasm_bindgen]
 pub fn render() {
-    console_log!("news-engine: render called");
+    console::log_1(&format!("news-engine: render called").into());
     // Future: Run graph layout algorithm, render nodes/edges to canvas via WebGPU
 }
 
 #[wasm_bindgen]
 pub fn set_data(_json: &str) {
-    console_log!("news-engine: data received");
+    console::log_1(&format!("news-engine: data received").into());
     // Future: Parse story/event data, build graph structure
 }

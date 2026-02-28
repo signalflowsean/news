@@ -5,8 +5,9 @@ const canvas = document.getElementById('engine') as HTMLCanvasElement;
 const ctx = canvas.getContext('2d');
 
 function resize() {
+  const canvasTop = canvas.getBoundingClientRect().top;
+  canvas.height = Math.max(0, window.innerHeight - canvasTop);
   canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
 }
 
 window.addEventListener('resize', resize);

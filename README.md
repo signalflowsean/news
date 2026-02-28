@@ -8,7 +8,7 @@ Graph visualization of news stories and events, powered by GDELT data and Neo4j.
 ┌─────────────────────────────────────────────────────────────────┐
 │                         Browser                                  │
 │  ┌─────────────────────────────────────────────────────────┐    │
-│  │                    Canvas (#app)                         │    │
+│  │                    Canvas (#engine)                         │    │
 │  │         Rendered by Rust/Wasm (future: WebGPU)          │    │
 │  └─────────────────────────────────────────────────────────┘    │
 │                              ▲                                   │
@@ -52,7 +52,7 @@ news/
 ### Prerequisites
 
 - Go 1.21+
-- Node.js 18+
+- Node.js 20.19+
 - Rust + wasm-pack
 - Python 3.11+
 - Neo4j (local or cloud)
