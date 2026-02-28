@@ -17,6 +17,8 @@ func getEnv(key, fallback string) string {
 	return fallback
 }
 
+// Serve the frontend index.html file with the initial data injected to increase initial page load speed.
+// After initial page is loaded, the frontend will fetch the data from the backend like a SPA
 func homeHandler(w http.ResponseWriter, r *http.Request, staticDir string) {
 	if r.URL.Path != "/" {
 		http.NotFound(w, r)
