@@ -64,6 +64,7 @@ func main() {
 		homeHandler(w, r, staticDir)
 	})
 
+	// Serve assets from the frontend dist directory
 	assetsDir := filepath.Join(staticDir, "assets")
 	fs := http.FileServer(http.Dir(assetsDir))
 	http.Handle("/assets/", http.StripPrefix("/assets/", fs))
