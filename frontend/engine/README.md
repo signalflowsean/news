@@ -18,11 +18,21 @@ cargo install wasm-pack
 wasm-pack build --target web --out-dir ../src/wasm
 ```
 
-Or from the parent frontend directory:
-```bash
+Create a full frontend build build wasm
+```bash 
+npm run build
+```
+
+You can build wasm seperately too
+```bash 
 npm run build:wasm
 ```
 
+You can build wasm natively and run it (assuming your cd is frontend/engine)
+```bash
+cargo build --release
+cargo run
+```
 ## Output
 
 Generates in `frontend/src/wasm/`:
