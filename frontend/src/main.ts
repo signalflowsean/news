@@ -1,8 +1,8 @@
-import './styles/main.css';
 import type { InitialData } from './types';
 
 const canvas = document.getElementById('engine') as HTMLCanvasElement;
-const ctx = canvas.getContext('2d');
+// Do not get a 2D context here: the WASM engine uses this canvas for WebGL. A canvas can only have one context.
+// We only get a 2D context in fallbackRender() when WASM fails to load.
 
 function resize() {
   const canvasTop = canvas.getBoundingClientRect().top;
@@ -18,9 +18,8 @@ const data: InitialData = (window as any).__INITIAL_DATA__ ?? { stories: [] };
 async function initWasm() {
   try {
     const wasm = await import('./wasm/news_engine');
+    // Default export is the init: load and instantiate the WASM (run_web/start runs on init)
     await wasm.default();
-    wasm.init();
-    wasm.render();
     console.log('Wasm engine initialized');
   } catch (e) {
     console.warn('Wasm not available, using fallback renderer:', e);
@@ -29,6 +28,7 @@ async function initWasm() {
 }
 
 function fallbackRender() {
+  const ctx = canvas.getContext('2d');
   if (!ctx) return;
 
   ctx.fillStyle = '#1a1a2e';
