@@ -1,7 +1,11 @@
 use std::sync::Arc;
 
 use winit::{
-    application::ApplicationHandler, event::*, event_loop::{ActiveEventLoop, EventLoop}, keyboard::{KeyCode, PhysicalKey}, window::Window
+    application::ApplicationHandler,
+    event::*,
+    event_loop::{ActiveEventLoop, EventLoop},
+    keyboard::{KeyCode, PhysicalKey},
+    window::Window,
 };
 
 #[cfg(target_arch = "wasm32")]
@@ -64,7 +68,9 @@ impl State {
             .await?;
 
         let surface_caps = surface.get_capabilities(&adapter);
-        let surface_format = surface_caps.formats.iter()
+        let surface_format = surface_caps
+            .formats
+            .iter()
             .find(|f| f.is_srgb())
             .copied()
             .unwrap_or(surface_caps.formats[0]);
@@ -72,7 +78,10 @@ impl State {
         // WebGL2 max texture dimension is 2048; clamp so Surface::configure doesn't fail.
         let (config_width, config_height) = if cfg!(target_arch = "wasm32") {
             const MAX_SURFACE_DIM: u32 = 2048;
-            (size.width.min(MAX_SURFACE_DIM), size.height.min(MAX_SURFACE_DIM))
+            (
+                size.width.min(MAX_SURFACE_DIM),
+                size.height.min(MAX_SURFACE_DIM),
+            )
         } else {
             (size.width, size.height)
         };
@@ -92,13 +101,13 @@ impl State {
             label: Some("Shader"),
             source: wgpu::ShaderSource::Wgsl(include_str!("shaders/shader.wgsl").into()),
         });
-        
+
         let render_pipeline_layout =
-        device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-            label: Some("Render Pipeline Layout"),
-            bind_group_layouts: &[],
-            immediate_size: 0,
-        });
+            device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+                label: Some("Render Pipeline Layout"),
+                bind_group_layouts: &[],
+                immediate_size: 0,
+            });
 
         let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
             label: Some("Render Pipeline"),
@@ -107,13 +116,15 @@ impl State {
             vertex: wgpu::VertexState {
                 module: &shader,
                 entry_point: Some("vs_main"), // 1.
-                buffers: &[], // 2.
+                buffers: &[],                 // 2.
                 compilation_options: wgpu::PipelineCompilationOptions::default(),
             },
-            fragment: Some(wgpu::FragmentState { // 3.
+            fragment: Some(wgpu::FragmentState {
+                // 3.
                 module: &shader,
                 entry_point: Some("fs_main"),
-                targets: &[Some(wgpu::ColorTargetState { // 4.
+                targets: &[Some(wgpu::ColorTargetState {
+                    // 4.
                     format: config.format,
                     blend: Some(wgpu::BlendState::REPLACE),
                     write_mask: wgpu::ColorWrites::ALL,
@@ -122,14 +133,14 @@ impl State {
             }),
             depth_stencil: None, // 1.
             multisample: wgpu::MultisampleState {
-                count: 1, // 2.
-                mask: !0, // 3.
+                count: 1,                         // 2.
+                mask: !0,                         // 3.
                 alpha_to_coverage_enabled: false, // 4.
             },
             multiview_mask: None, // 5.
-            cache: None, // 6.
+            cache: None,          // 6.
         });
- 
+
         Ok(Self {
             surface,
             device,
@@ -142,30 +153,22 @@ impl State {
     }
 
     pub fn resize(&mut self, width: u32, height: u32) {
-        if width == 0 || height == 0 {
+        if width <= 0 || height <= 0 {
             return;
         }
-        #[cfg(target_arch = "wasm32")]
-        const MAX_SURFACE_DIM: u32 = 2048;
-        #[cfg(target_arch = "wasm32")]
-        let (width, height) = (width.min(MAX_SURFACE_DIM), height.min(MAX_SURFACE_DIM));
-
-        #[cfg(target_arch = "wasm32")]
-        log::info!("Resizing to {}x{}", width, height);
-
         self.config.width = width;
         self.config.height = height;
         self.surface.configure(&self.device, &self.config);
         self.is_surface_configured = true;
     }
-    
+
     fn handle_key(&self, event_loop: &ActiveEventLoop, code: KeyCode, is_pressed: bool) {
         match (code, is_pressed) {
             (KeyCode::Escape, true) => event_loop.exit(),
             _ => {}
         }
     }
-     
+
     fn update(&mut self) {
         // remove `todo!()`
     }
@@ -173,16 +176,20 @@ impl State {
     fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
         self.window.request_redraw();
 
-         // We can't render unless the surface is configured
+        // We can't render unless the surface is configured
         if !self.is_surface_configured {
             return Ok(());
         }
-        
+
         let output = self.surface.get_current_texture()?;
-        let view = output.texture.create_view(&wgpu::TextureViewDescriptor::default());
-        let mut encoder = self.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
-            label: Some("Render Encoder"),
-        });
+        let view = output
+            .texture
+            .create_view(&wgpu::TextureViewDescriptor::default());
+        let mut encoder = self
+            .device
+            .create_command_encoder(&wgpu::CommandEncoderDescriptor {
+                label: Some("Render Encoder"),
+            });
 
         {
             let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
@@ -210,11 +217,11 @@ impl State {
             render_pass.set_pipeline(&self.render_pipeline);
             render_pass.draw(0..3, 0..1);
         }
-    
+
         // submit will accept anything that implements IntoIter
         self.queue.submit(std::iter::once(encoder.finish()));
         output.present();
-    
+
         Ok(())
     }
 }
@@ -246,7 +253,7 @@ impl ApplicationHandler<State> for App {
         {
             use wasm_bindgen::JsCast;
             use winit::platform::web::WindowAttributesExtWebSys;
-            
+
             const CANVAS_ID: &str = "engine";
 
             let window = wgpu::web_sys::window().unwrap_throw();
@@ -261,7 +268,7 @@ impl ApplicationHandler<State> for App {
         #[cfg(not(target_arch = "wasm32"))]
         {
             // If we are not on web we can use pollster to
-            // await the 
+            // await the
             self.state = Some(pollster::block_on(State::new(window)).unwrap());
         }
 
@@ -289,14 +296,17 @@ impl ApplicationHandler<State> for App {
         #[cfg(target_arch = "wasm32")]
         {
             console::log_1(&"news-engine: user_event State received".into());
-            let (w, h) = (event.window.inner_size().width, event.window.inner_size().height);
+            let (w, h) = (
+                event.window.inner_size().width,
+                event.window.inner_size().height,
+            );
             console::log_1(&format!("news-engine: inner_size {}x{}", w, h).into());
             event.window.request_redraw();
             event.resize(w, h);
         }
         self.state = Some(event);
     }
-         
+
     fn window_event(
         &mut self,
         event_loop: &ActiveEventLoop,

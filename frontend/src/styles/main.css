@@ -15,6 +15,9 @@ html {
 
 body {
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 /* Media responsive */
@@ -37,4 +40,9 @@ p {
     scroll-behavior: smooth;
     scroll-padding-top: 3rem;
   }
+}
+
+#engine {
+  width: 100%;
+  aspect-ratio: 1;
 }

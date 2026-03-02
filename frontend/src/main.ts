@@ -4,15 +4,6 @@ const canvas = document.getElementById('engine') as HTMLCanvasElement;
 // Do not get a 2D context here: the WASM engine uses this canvas for WebGL. A canvas can only have one context.
 // We only get a 2D context in fallbackRender() when WASM fails to load.
 
-function resize() {
-  const canvasTop = canvas.getBoundingClientRect().top;
-  canvas.height = Math.max(0, window.innerHeight - canvasTop);
-  canvas.width = window.innerWidth;
-}
-
-window.addEventListener('resize', resize);
-resize();
-
 const data: InitialData = (window as any).__INITIAL_DATA__ ?? { stories: [] };
 
 async function initWasm() {
