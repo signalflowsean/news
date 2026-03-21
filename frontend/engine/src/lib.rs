@@ -27,6 +27,7 @@ pub struct State {
 impl State {
     pub async fn new(window: Arc<Window>) -> anyhow::Result<Self> {
         let size = window.inner_size();
+        log::info!("State::new: size = {:?}", size);
 
         // The instance is a handle to our GPU
         // BackendBit::PRIMARY => Vulkan + Metal + DX12 + Browser WebGPU
@@ -57,11 +58,10 @@ impl State {
                 experimental_features: wgpu::ExperimentalFeatures::disabled(),
                 // WebGL doesn't support all of wgpu's features, so if
                 // we're building for the web we'll have to disable some.
-                required_limits: if cfg!(target_arch = "wasm32") {
-                    wgpu::Limits::downlevel_webgl2_defaults()
-                } else {
-                    wgpu::Limits::default()
-                },
+                #[cfg(not(target_arch = "wasm32"))]
+                required_limits: wgpu::Limits::default(),
+                #[cfg(target_arch = "wasm32")]
+                required_limits: wgpu::Limits::downlevel_webgl2_defaults(),
                 memory_hints: Default::default(),
                 trace: wgpu::Trace::Off,
             })
@@ -75,16 +75,9 @@ impl State {
             .copied()
             .unwrap_or(surface_caps.formats[0]);
 
-        // WebGL2 max texture dimension is 2048; clamp so Surface::configure doesn't fail.
-        let (config_width, config_height) = if cfg!(target_arch = "wasm32") {
-            const MAX_SURFACE_DIM: u32 = 2048;
-            (
-                size.width.min(MAX_SURFACE_DIM),
-                size.height.min(MAX_SURFACE_DIM),
-            )
-        } else {
-            (size.width, size.height)
-        };
+        let max_dim = device.limits().max_texture_dimension_2d;
+        let config_width = size.width.min(max_dim);
+        let config_height = size.height.min(max_dim);
 
         let config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
@@ -153,9 +146,13 @@ impl State {
     }
 
     pub fn resize(&mut self, width: u32, height: u32) {
-        if width <= 0 || height <= 0 {
+        if width == 0 || height == 0 {
             return;
         }
+        let max_dim = self.device.limits().max_texture_dimension_2d;
+        let width = width.min(max_dim);
+        let height = height.min(max_dim);
+        log::info!("State::resize: width = {}, height = {}", width, height);
         self.config.width = width;
         self.config.height = height;
         self.surface.configure(&self.device, &self.config);
@@ -295,12 +292,12 @@ impl ApplicationHandler<State> for App {
         // This is where proxy.send_event() ends up
         #[cfg(target_arch = "wasm32")]
         {
-            console::log_1(&"news-engine: user_event State received".into());
+            // console::log_1(&"news-engine: user_event State received".into());
             let (w, h) = (
                 event.window.inner_size().width,
                 event.window.inner_size().height,
             );
-            console::log_1(&format!("news-engine: inner_size {}x{}", w, h).into());
+            // console::log_1(&format!("news-engine: inner_size {}x{}", w, h).into());
             event.window.request_redraw();
             event.resize(w, h);
         }
@@ -350,6 +347,7 @@ impl ApplicationHandler<State> for App {
 }
 
 pub fn run() -> anyhow::Result<()> {
+    log::info!("run() started");
     #[cfg(not(target_arch = "wasm32"))]
     {
         env_logger::init();
@@ -357,7 +355,7 @@ pub fn run() -> anyhow::Result<()> {
     #[cfg(target_arch = "wasm32")]
     {
         console_log::init_with_level(log::Level::Info).unwrap_throw();
-        console::log_1(&"news-engine: run() started, building event loop".into());
+        // console::log_1(&"news-engine: run() started, building event loop".into());
     }
 
     let event_loop = EventLoop::with_user_event().build()?;
