@@ -108,30 +108,28 @@ impl State {
             primitive: wgpu::PrimitiveState::default(),
             vertex: wgpu::VertexState {
                 module: &shader,
-                entry_point: Some("vs_main"), // 1.
-                buffers: &[],                 // 2.
+                entry_point: Some("vs_main"),
+                buffers: &[],
                 compilation_options: wgpu::PipelineCompilationOptions::default(),
             },
             fragment: Some(wgpu::FragmentState {
-                // 3.
                 module: &shader,
                 entry_point: Some("fs_main"),
                 targets: &[Some(wgpu::ColorTargetState {
-                    // 4.
                     format: config.format,
                     blend: Some(wgpu::BlendState::REPLACE),
                     write_mask: wgpu::ColorWrites::ALL,
                 })],
                 compilation_options: wgpu::PipelineCompilationOptions::default(),
             }),
-            depth_stencil: None, // 1.
+            depth_stencil: None,
             multisample: wgpu::MultisampleState {
-                count: 1,                         // 2.
-                mask: !0,                         // 3.
-                alpha_to_coverage_enabled: false, // 4.
+                count: 1,
+                mask: !0,
+                alpha_to_coverage_enabled: false,
             },
-            multiview_mask: None, // 5.
-            cache: None,          // 6.
+            multiview_mask: None,
+            cache: None,
         });
 
         Ok(Self {
@@ -243,6 +241,7 @@ impl App {
 
 impl ApplicationHandler<State> for App {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
+        log::info!("App::resumed() entered");
         #[allow(unused_mut)]
         let mut window_attributes = Window::default_attributes();
 
@@ -265,7 +264,7 @@ impl ApplicationHandler<State> for App {
         #[cfg(not(target_arch = "wasm32"))]
         {
             // If we are not on web we can use pollster to
-            // await the
+            // await the State::new future.
             self.state = Some(pollster::block_on(State::new(window)).unwrap());
         }
 
@@ -289,15 +288,14 @@ impl ApplicationHandler<State> for App {
 
     #[allow(unused_mut)]
     fn user_event(&mut self, _event_loop: &ActiveEventLoop, mut event: State) {
+        log::info!("App::user_event() entered");
         // This is where proxy.send_event() ends up
         #[cfg(target_arch = "wasm32")]
         {
-            // console::log_1(&"news-engine: user_event State received".into());
             let (w, h) = (
                 event.window.inner_size().width,
                 event.window.inner_size().height,
             );
-            // console::log_1(&format!("news-engine: inner_size {}x{}", w, h).into());
             event.window.request_redraw();
             event.resize(w, h);
         }
@@ -355,7 +353,6 @@ pub fn run() -> anyhow::Result<()> {
     #[cfg(target_arch = "wasm32")]
     {
         console_log::init_with_level(log::Level::Info).unwrap_throw();
-        // console::log_1(&"news-engine: run() started, building event loop".into());
     }
 
     let event_loop = EventLoop::with_user_event().build()?;
