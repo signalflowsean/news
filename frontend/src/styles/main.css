@@ -9,15 +9,15 @@
 }
 
 html {
+  height: 100%;
   color-scheme: dark light; /* Default dark */
   hanging-punctuation: first last; /* Not supported in Chrome */
 }
 
 body {
-  min-height: 100vh;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
 }
 
 /* Media responsive */
@@ -42,7 +42,16 @@ p {
   }
 }
 
+header {
+  flex-shrink: 0;
+  padding: 0.75rem 1rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
 #engine {
+  display: block;
   width: 100%;
-  aspect-ratio: 1;
+  flex: 1 1 auto;
+  min-height: 0;
 }

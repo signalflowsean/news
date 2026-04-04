@@ -1,4 +1,5 @@
 import type { InitialData } from './types';
+import init from './wasm/news_engine';
 
 const canvas = document.getElementById('engine') as HTMLCanvasElement;
 // Do not get a 2D context here: the WASM engine uses this canvas for WebGL. A canvas can only have one context.
@@ -6,13 +7,18 @@ const canvas = document.getElementById('engine') as HTMLCanvasElement;
 
 const data: InitialData = (window as any).__INITIAL_DATA__ ?? { stories: [] };
 
+/** Winit's web EventLoop cannot block like on native; it schedules the loop and throws this Error to unwind the Rust stack. Our #[wasm_bindgen(start)] runs during init(), so the throw surfaces here even when startup succeeded. */
+const WINIT_WEB_CONTROL_FLOW_PREFIX = 'Using exceptions for control flow';
+
 async function initWasm() {
   try {
-    const wasm = await import('./wasm/news_engine');
-    // Default export is the init: load and instantiate the WASM (run_web/start runs on init)
-    await wasm.default();
+    await init();
     console.log('Wasm engine initialized');
   } catch (e) {
+    if (e instanceof Error && e.message.startsWith(WINIT_WEB_CONTROL_FLOW_PREFIX)) {
+      console.log('Wasm engine initialized');
+      return;
+    }
     console.warn('Wasm not available, using fallback renderer:', e);
     fallbackRender();
   }

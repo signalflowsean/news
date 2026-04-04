@@ -18,7 +18,7 @@ cargo install wasm-pack
 wasm-pack build --target web --out-dir ../src/wasm
 ```
 
-Create a full frontend build build wasm
+Create a full frontend build (js, html, css, wasm + glue)
 ```bash 
 npm run build
 ```

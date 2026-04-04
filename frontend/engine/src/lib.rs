@@ -1,5 +1,6 @@
-use std::sync::Arc;
+use tracing::{error, info};
 
+use std::sync::Arc;
 use winit::{
     application::ApplicationHandler,
     event::*,
@@ -27,7 +28,7 @@ pub struct State {
 impl State {
     pub async fn new(window: Arc<Window>) -> anyhow::Result<Self> {
         let size = window.inner_size();
-        log::info!("State::new: size = {:?}", size);
+        info!("news-engine: State::new: size = {:?}", size);
 
         // The instance is a handle to our GPU
         // BackendBit::PRIMARY => Vulkan + Metal + DX12 + Browser WebGPU
@@ -39,7 +40,9 @@ impl State {
             ..Default::default()
         });
 
-        let surface = instance.create_surface(window.clone()).unwrap();
+        let surface = instance
+            .create_surface(window.clone())
+            .map_err(|e| anyhow::anyhow!("Failed to create wgpu surface: {e}"))?;
 
         // On WebGL, request_adapter with compatible_surface is required;
         let adapter = instance
@@ -144,13 +147,17 @@ impl State {
     }
 
     pub fn resize(&mut self, width: u32, height: u32) {
+        info!("news-engine: State::resize() entered");
         if width == 0 || height == 0 {
             return;
         }
         let max_dim = self.device.limits().max_texture_dimension_2d;
         let width = width.min(max_dim);
         let height = height.min(max_dim);
-        log::info!("State::resize: width = {}, height = {}", width, height);
+        info!(
+            "news-engine: State::resize: width = {}, height = {}",
+            width, height
+        );
         self.config.width = width;
         self.config.height = height;
         self.surface.configure(&self.device, &self.config);
@@ -169,6 +176,7 @@ impl State {
     }
 
     fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
+        // info!("news-engine: State::render() entered");
         self.window.request_redraw();
 
         // We can't render unless the surface is configured
@@ -229,6 +237,7 @@ pub struct App {
 
 impl App {
     pub fn new(#[cfg(target_arch = "wasm32")] event_loop: &EventLoop<State>) -> Self {
+        info!("news-engine: App::new() entered");
         #[cfg(target_arch = "wasm32")]
         let proxy = Some(event_loop.create_proxy());
         Self {
@@ -241,7 +250,7 @@ impl App {
 
 impl ApplicationHandler<State> for App {
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
-        log::info!("App::resumed() entered");
+        info!("news-engine: App::resumed() entered");
         #[allow(unused_mut)]
         let mut window_attributes = Window::default_attributes();
 
@@ -274,13 +283,16 @@ impl ApplicationHandler<State> for App {
             // proxy to send the results to the event loop
             if let Some(proxy) = self.proxy.take() {
                 wasm_bindgen_futures::spawn_local(async move {
-                    assert!(proxy
-                        .send_event(
-                            State::new(window)
-                                .await
-                                .expect("Unable to create canvas!!!")
-                        )
-                        .is_ok())
+                    match State::new(window).await {
+                        Ok(state) => {
+                            if let Err(err) = proxy.send_event(state) {
+                                error!("news-engine: failed to send init state event: {}", err);
+                            }
+                        }
+                        Err(err) => {
+                            error!("news-engine: failed to initialize engine state: {:?}", err);
+                        }
+                    }
                 });
             }
         }
@@ -288,7 +300,7 @@ impl ApplicationHandler<State> for App {
 
     #[allow(unused_mut)]
     fn user_event(&mut self, _event_loop: &ActiveEventLoop, mut event: State) {
-        log::info!("App::user_event() entered");
+        info!("news-engine: App::user_event() entered");
         // This is where proxy.send_event() ends up
         #[cfg(target_arch = "wasm32")]
         {
@@ -308,6 +320,7 @@ impl ApplicationHandler<State> for App {
         _window_id: winit::window::WindowId,
         event: WindowEvent,
     ) {
+        // info!("news-engine: App::window_event() entered");
         let state = match &mut self.state {
             Some(canvas) => canvas,
             None => return,
@@ -326,7 +339,7 @@ impl ApplicationHandler<State> for App {
                         state.resize(size.width, size.height);
                     }
                     Err(e) => {
-                        log::error!("Unable to render {}", e);
+                        error!("news-engine: Unable to render {}", e);
                     }
                 }
             }
@@ -345,15 +358,17 @@ impl ApplicationHandler<State> for App {
 }
 
 pub fn run() -> anyhow::Result<()> {
-    log::info!("run() started");
     #[cfg(not(target_arch = "wasm32"))]
     {
-        env_logger::init();
+        tracing_subscriber::fmt::init()
     }
     #[cfg(target_arch = "wasm32")]
     {
-        console_log::init_with_level(log::Level::Info).unwrap_throw();
+        console_error_panic_hook::set_once();
+        tracing_wasm::set_as_global_default();
     }
+
+    info!("news-engine: run() started");
 
     let event_loop = EventLoop::with_user_event().build()?;
     let mut app = App::new(
