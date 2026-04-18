@@ -199,8 +199,7 @@ impl State {
             | wgpu::CurrentSurfaceTexture::Occluded
             | wgpu::CurrentSurfaceTexture::Validation => return,
             wgpu::CurrentSurfaceTexture::Outdated => {
-                let size = self.window.inner_size();
-                self.resize(size.width, size.height);
+                self.surface.configure(&self.device, &self.config);
                 return;
             }
             wgpu::CurrentSurfaceTexture::Lost => {
@@ -343,7 +342,7 @@ impl ApplicationHandler<State> for App {
     ) {
         // info!("news-engine: App::window_event() entered");
         let state = match &mut self.state {
-            Some(canvas) => canvas,
+            Some(state) => state,
             None => return,
         };
 
