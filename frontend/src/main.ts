@@ -1,34 +1,31 @@
-import './styles/main.css';
 import type { InitialData } from './types';
+import init from './wasm/news_engine';
 
 const canvas = document.getElementById('engine') as HTMLCanvasElement;
-const ctx = canvas.getContext('2d');
-
-function resize() {
-  const canvasTop = canvas.getBoundingClientRect().top;
-  canvas.height = Math.max(0, window.innerHeight - canvasTop);
-  canvas.width = window.innerWidth;
-}
-
-window.addEventListener('resize', resize);
-resize();
+// Do not get a 2D context here: the WASM engine uses this canvas for WebGL. A canvas can only have one context.
+// We only get a 2D context in fallbackRender() when WASM fails to load.
 
 const data: InitialData = (window as any).__INITIAL_DATA__ ?? { stories: [] };
 
+/** Winit's web EventLoop cannot block like on native; it schedules the loop and throws this Error to unwind the Rust stack. Our #[wasm_bindgen(start)] runs during init(), so the throw surfaces here even when startup succeeded. */
+const WINIT_WEB_CONTROL_FLOW_PREFIX = 'Using exceptions for control flow';
+
 async function initWasm() {
   try {
-    const wasm = await import('./wasm/news_engine');
-    await wasm.default();
-    wasm.init();
-    wasm.render();
+    await init();
     console.log('Wasm engine initialized');
   } catch (e) {
+    if (e instanceof Error && e.message.startsWith(WINIT_WEB_CONTROL_FLOW_PREFIX)) {
+      console.log('Wasm engine initialized');
+      return;
+    }
     console.warn('Wasm not available, using fallback renderer:', e);
     fallbackRender();
   }
 }
 
 function fallbackRender() {
+  const ctx = canvas.getContext('2d');
   if (!ctx) return;
 
   ctx.fillStyle = '#1a1a2e';
