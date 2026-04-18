@@ -23,7 +23,7 @@ Create a full frontend build (js, html, css, wasm + glue)
 npm run build
 ```
 
-You can build wasm seperately too
+You can build wasm separately too
 ```bash 
 npm run build:wasm
 ```
